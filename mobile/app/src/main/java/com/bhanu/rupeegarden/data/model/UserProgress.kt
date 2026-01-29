@@ -10,7 +10,8 @@ data class UserProgress(
     val totalSavedDays: Int = 0,
     val totalSpentDays: Int = 0,
     val monthlyBudget: Double = 10000.0, // Default budget in rupees
-    val lastEntryDate: String? = null // ISO format for streak calculation
+    val lastEntryDate: String? = null, // ISO format for streak calculation
+    val soundEnabled: Boolean = true
 ) {
     val level: Int get() = (totalXp / 200) + 1
     val xpInCurrentLevel: Int get() = totalXp % 200

@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import com.bhanu.rupeegarden.audio.LocalSoundManager
+import com.bhanu.rupeegarden.audio.SoundEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +28,18 @@ fun CompletionScreen(
     onContinue: () -> Unit,
     onViewGarden: () -> Unit
 ) {
+    val soundManager = LocalSoundManager.current
+
+    // Play completion sounds
+    LaunchedEffect(Unit) {
+        if (saved) {
+            soundManager?.play(SoundEffect.DAY_SAVED)
+            soundManager?.play(SoundEffect.CONFETTI, 0.8f)
+        } else {
+            soundManager?.play(SoundEffect.DAY_SPENT)
+        }
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,

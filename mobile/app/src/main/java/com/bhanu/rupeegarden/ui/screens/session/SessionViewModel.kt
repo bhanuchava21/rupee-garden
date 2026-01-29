@@ -17,6 +17,7 @@ data class SessionUiState(
     val activeSession: DayEntry? = null,
     val elapsedSeconds: Long = 0,
     val plantState: PlantState = PlantState.SEED,
+    val previousPlantState: PlantState? = null,
     val isFullGrown: Boolean = false,
     val error: String? = null
 )
@@ -75,13 +76,14 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         timerJob = viewModelScope.launch {
             while (true) {
                 val elapsed = (System.currentTimeMillis() - session.startedAt) / 1000
-                val plantState = getPlantStateUseCase.getPlantStateFromTime(elapsed)
-                val isFullGrown = plantState == PlantState.FULL
+                val newPlantState = getPlantStateUseCase.getPlantStateFromTime(elapsed)
+                val isFullGrown = newPlantState == PlantState.FULL
 
-                _uiState.update {
-                    it.copy(
+                _uiState.update { currentState ->
+                    currentState.copy(
                         elapsedSeconds = elapsed,
-                        plantState = plantState,
+                        previousPlantState = currentState.plantState,
+                        plantState = newPlantState,
                         isFullGrown = isFullGrown
                     )
                 }

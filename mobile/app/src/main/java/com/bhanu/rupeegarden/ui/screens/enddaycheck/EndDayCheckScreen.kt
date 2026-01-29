@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import com.bhanu.rupeegarden.audio.LocalSoundManager
+import com.bhanu.rupeegarden.audio.SoundEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,10 +34,15 @@ fun EndDayCheckScreen(
     viewModel: EndDayCheckViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val soundManager = LocalSoundManager.current
 
-    // Navigate when completion is done
+    // Play sounds and navigate when completion is done
     LaunchedEffect(uiState.completionResult) {
         uiState.completionResult?.let { result ->
+            // Play level up sound if leveled up
+            if (result.leveledUp) {
+                soundManager?.play(SoundEffect.LEVEL_UP)
+            }
             onComplete(result.entry.saved ?: true, result.xpEarned)
         }
     }

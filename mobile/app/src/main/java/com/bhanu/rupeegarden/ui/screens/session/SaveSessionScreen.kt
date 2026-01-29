@@ -9,6 +9,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import com.bhanu.rupeegarden.audio.LocalSoundManager
+import com.bhanu.rupeegarden.audio.SoundEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +29,27 @@ fun SaveSessionScreen(
     viewModel: SessionViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val soundManager = LocalSoundManager.current
+
+    // Play sound on plant state transition
+    LaunchedEffect(uiState.plantState) {
+        val previousState = uiState.previousPlantState
+        if (previousState != null && previousState != uiState.plantState) {
+            val sound = when (uiState.plantState) {
+                PlantState.SEED -> SoundEffect.PLANT_SEED
+                PlantState.SPROUT -> SoundEffect.PLANT_SPROUT
+                PlantState.YOUNG -> SoundEffect.PLANT_YOUNG
+                PlantState.FULL -> SoundEffect.PLANT_FULL
+                PlantState.WITHERED -> null
+            }
+            sound?.let { soundManager?.play(it) }
+        }
+    }
+
+    // Play initial seed sound when session starts
+    LaunchedEffect(Unit) {
+        soundManager?.play(SoundEffect.PLANT_SEED)
+    }
 
     Scaffold(
         topBar = {

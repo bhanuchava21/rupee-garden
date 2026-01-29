@@ -2,6 +2,9 @@ package com.bhanu.rupeegarden.ui.screens.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -194,6 +197,10 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                // Bottom spacing for navigation bar
+                val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                Spacer(modifier = Modifier.height(navBarPadding + 24.dp))
             }
         }
     }

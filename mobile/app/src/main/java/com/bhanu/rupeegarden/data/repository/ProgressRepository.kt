@@ -74,4 +74,9 @@ class ProgressRepository(private val dataStore: RupeeGardenDataStore) {
     suspend fun saveProgress(progress: UserProgress) {
         dataStore.saveUserProgress(progress)
     }
+
+    suspend fun setSoundEnabled(enabled: Boolean) {
+        val current = getCurrentProgress()
+        dataStore.saveUserProgress(current.copy(soundEnabled = enabled))
+    }
 }

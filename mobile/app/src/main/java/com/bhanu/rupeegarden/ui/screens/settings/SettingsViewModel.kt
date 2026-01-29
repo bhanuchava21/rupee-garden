@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val isLoading: Boolean = false,
     val message: String? = null,
-    val currentBudget: Double = 10000.0
+    val currentBudget: Double = 10000.0,
+    val soundEnabled: Boolean = true
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -25,13 +26,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
-        loadCurrentBudget()
+        loadSettings()
     }
 
-    private fun loadCurrentBudget() {
+    private fun loadSettings() {
         viewModelScope.launch {
             val progress = progressRepository.getCurrentProgress()
-            _uiState.update { it.copy(currentBudget = progress.monthlyBudget) }
+            _uiState.update {
+                it.copy(
+                    currentBudget = progress.monthlyBudget,
+                    soundEnabled = progress.soundEnabled
+                )
+            }
         }
     }
 
@@ -99,5 +105,23 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun clearMessage() {
         _uiState.update { it.copy(message = null) }
+    }
+
+    fun toggleSound(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                progressRepository.setSoundEnabled(enabled)
+                _uiState.update {
+                    it.copy(
+                        soundEnabled = enabled,
+                        message = if (enabled) "Sound effects enabled" else "Sound effects disabled"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(message = "Error updating sound setting: ${e.message}")
+                }
+            }
+        }
     }
 }
