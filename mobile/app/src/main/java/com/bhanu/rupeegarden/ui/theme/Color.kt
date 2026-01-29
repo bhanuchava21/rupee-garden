@@ -31,6 +31,10 @@ val TrunkBrownDark = Color(0xFF6B4B2A)
 val SoilBrown = Color(0xFF795548)
 val SoilBrownDark = Color(0xFF5D4037)
 
+// Impulse Check
+val ImpulseBlue = Color(0xFF5B9BD5)
+val ImpulseBlueDark = Color(0xFF4A8AC4)
+
 // Background colors
 val BackgroundLight = Color(0xFFF5F9F3)
 val BackgroundDark = Color(0xFF1A1C19)

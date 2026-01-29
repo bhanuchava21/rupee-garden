@@ -12,6 +12,7 @@ import com.bhanu.rupeegarden.ui.screens.completion.CompletionScreen
 import com.bhanu.rupeegarden.ui.screens.enddaycheck.EndDayCheckScreen
 import com.bhanu.rupeegarden.ui.screens.garden.GardenScreen
 import com.bhanu.rupeegarden.ui.screens.home.HomeScreen
+import com.bhanu.rupeegarden.ui.screens.impulse.ImpulseCheckScreen
 import com.bhanu.rupeegarden.ui.screens.insights.InsightsScreen
 import com.bhanu.rupeegarden.ui.screens.session.SaveSessionScreen
 import com.bhanu.rupeegarden.ui.screens.settings.SettingsScreen
@@ -42,6 +43,9 @@ fun RupeeGardenNavHost(
                 },
                 onResumeSession = {
                     navController.navigate(Screen.Session.route)
+                },
+                onNavigateToPauseSpend = {
+                    navController.navigate(Screen.ImpulseCheck.route)
                 }
             )
         }
@@ -102,6 +106,9 @@ fun RupeeGardenNavHost(
             GardenScreen(
                 onBack = {
                     navController.popBackStack()
+                },
+                onNavigateToPauseSpend = {
+                    navController.navigate(Screen.ImpulseCheck.route)
                 }
             )
         }
@@ -127,6 +134,18 @@ fun RupeeGardenNavHost(
 
         composable(Screen.Achievements.route) {
             AchievementsScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.ImpulseCheck.route) {
+            ImpulseCheckScreen(
+                onComplete = { _, _, _ ->
+                    // Silent completion - just go back home
+                    navController.popBackStack()
+                },
                 onBack = {
                     navController.popBackStack()
                 }

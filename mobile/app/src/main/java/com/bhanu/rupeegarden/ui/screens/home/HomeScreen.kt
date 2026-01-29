@@ -1,28 +1,28 @@
 package com.bhanu.rupeegarden.ui.screens.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bhanu.rupeegarden.ui.components.*
 import com.bhanu.rupeegarden.ui.theme.GreenPrimary
+import com.bhanu.rupeegarden.ui.theme.SpentRed
 import com.bhanu.rupeegarden.ui.theme.XpGold
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +32,7 @@ fun HomeScreen(
     onNavigateToInsights: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onResumeSession: () -> Unit,
+    onNavigateToPauseSpend: () -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -78,7 +79,16 @@ fun HomeScreen(
                     )
                 }
             }
-        }
+        },
+        floatingActionButton = {
+            if (!uiState.isLoading) {
+                PauseSpendFab(
+                    onClick = onNavigateToPauseSpend,
+                    showLabel = uiState.impulseStats.totalChecks < 3
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -94,16 +104,14 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                // Stats Card
-                StatsCard(progress = uiState.progress)
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Budget Card
+                // Simple Budget Display - Just "₹X remaining"
                 uiState.monthlySpending?.let { spending ->
-                    BudgetCard(
+                    SimpleBudgetDisplay(
                         spent = spending.totalSpent,
                         budget = spending.budget
                     )
@@ -111,34 +119,29 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Action Button
+                // Daily Check-in (Secondary Action)
                 when {
                     uiState.hasActiveSession -> {
-                        // Resume active session
-                        ActionButton(
-                            text = "Resume Session",
-                            description = "You have an active session",
-                            onClick = onResumeSession,
-                            isHighlighted = true
+                        DailyCheckInButton(
+                            text = "Resume Check-in",
+                            subtitle = "You have an active session",
+                            onClick = onResumeSession
                         )
                     }
                     uiState.canStartNewSession -> {
-                        // Start new session
-                        ActionButton(
-                            text = "Start Today's Session",
-                            description = "Plant your savings seed",
+                        DailyCheckInButton(
+                            text = "Daily Check-in",
+                            subtitle = "Record today's spending decision",
                             onClick = {
                                 viewModel.startSession()
-                                // Navigation is handled by LaunchedEffect when session is created
-                            },
-                            isHighlighted = true
+                            }
                         )
                     }
                     else -> {
                         // Already completed today
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = GreenPrimary.copy(alpha = 0.1f)
                             )
@@ -146,19 +149,19 @@ fun HomeScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(24.dp),
+                                    .padding(20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "Today's session complete!",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
+                                    text = "Garden updated for today",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
                                     color = GreenPrimary
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Come back tomorrow to continue growing your garden",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = "Pause Spend is always available if you need it.",
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
                                 )
@@ -166,177 +169,128 @@ fun HomeScreen(
                         }
                     }
                 }
-
-                // Quick Stats Row
-                if (!uiState.isLoading) {
-                    uiState.monthlySpending?.let { spending ->
-                        QuickStatsRow(
-                            savedDays = spending.savedDays,
-                            spentDays = spending.spentDays
-                        )
-                    }
-                }
-
-                // Navigation Cards
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    NavigationCard(
-                        title = "Garden",
-                        subtitle = "View your trees",
-                        icon = Icons.Default.Park,
-                        onClick = onNavigateToGarden,
-                        modifier = Modifier.weight(1f)
-                    )
-                    NavigationCard(
-                        title = "Insights",
-                        subtitle = "Spending analysis",
-                        icon = Icons.Default.Insights,
-                        onClick = onNavigateToInsights,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                // Bottom spacing for navigation bar
-                val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                Spacer(modifier = Modifier.height(navBarPadding + 24.dp))
             }
         }
     }
 
-    // Error snackbar
+    // Error handling
     uiState.error?.let { error ->
         LaunchedEffect(error) {
-            // Show error and clear
             viewModel.clearError()
         }
     }
 }
 
+/**
+ * Ultra-minimal budget display - just shows remaining amount
+ */
 @Composable
-private fun ActionButton(
-    text: String,
-    description: String,
-    onClick: () -> Unit,
-    isHighlighted: Boolean = false
+private fun SimpleBudgetDisplay(
+    spent: Double,
+    budget: Double
 ) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isHighlighted) GreenPrimary else MaterialTheme.colorScheme.primary
-        )
+    val remaining = (budget - spent).coerceAtLeast(0.0)
+    val isOverBudget = spent > budget
+    val progress = (spent / budget).coerceIn(0.0, 1.0).toFloat()
+
+    val format = NumberFormat.getCurrencyInstance(Locale.Builder().setLanguage("en").setRegion("IN").build())
+    format.maximumFractionDigits = 0
+
+    val progressColor = when {
+        isOverBudget -> SpentRed
+        progress > 0.8f -> XpGold
+        else -> GreenPrimary
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        // Main amount
+        Text(
+            text = if (isOverBudget) {
+                "Over budget"
+            } else {
+                format.format(remaining)
+            },
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            color = if (isOverBudget) SpentRed else GreenPrimary
+        )
+
+        Text(
+            text = if (isOverBudget) {
+                "by ${format.format(spent - budget)}"
+            } else {
+                "remaining"
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Progress bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(progressColor.copy(alpha = 0.2f))
         ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(progressColor)
             )
-            Column {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-            }
         }
     }
 }
 
+/**
+ * Daily Check-in button - visually demoted compared to Pause Spend FAB
+ */
 @Composable
-private fun QuickStatsRow(
-    savedDays: Int,
-    spentDays: Int
+private fun DailyCheckInButton(
+    text: String,
+    subtitle: String,
+    onClick: () -> Unit
 ) {
-    Card(
+    OutlinedCard(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = savedDays.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = GreenPrimary
+                    text = text,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Saved this month",
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = spentDays.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = com.bhanu.rupeegarden.ui.theme.SpentRed
-                )
-                Text(
-                    text = "Spent this month",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NavigationCard(
-    title: String,
-    subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             Icon(
-                imageVector = icon,
+                imageVector = Icons.Default.Park,
                 contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = GreenPrimary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = GreenPrimary,
+                modifier = Modifier.size(24.dp)
             )
         }
     }

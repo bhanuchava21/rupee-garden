@@ -56,12 +56,15 @@ class DemoDataSeeder(private val dataStore: RupeeGardenDataStore) {
 
         dataStore.saveEntries(entries)
         dataStore.saveUserProgress(progress)
+        dataStore.setAppInitialized()
     }
 
     suspend fun clearAllData() {
         dataStore.saveEntries(emptyList())
         dataStore.saveUserProgress(UserProgress())
         dataStore.clearActiveSession()
+        dataStore.saveImpulseEntries(emptyList())
+        dataStore.saveImpulseStats(com.bhanu.rupeegarden.data.model.ImpulseStats())
     }
 
     suspend fun hasData(): Boolean {

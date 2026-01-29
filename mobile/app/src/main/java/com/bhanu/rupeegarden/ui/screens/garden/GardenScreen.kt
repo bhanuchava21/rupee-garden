@@ -35,12 +35,24 @@ import java.time.LocalDate
 @Composable
 fun GardenScreen(
     onBack: () -> Unit,
+    onNavigateToPauseSpend: () -> Unit,
     viewModel: GardenViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    Scaffold(
+        floatingActionButton = {
+            com.bhanu.rupeegarden.ui.components.PauseSpendFab(
+                onClick = onNavigateToPauseSpend,
+                showLabel = false // No label needed on Garden screen
+            )
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) { scaffoldPadding ->
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
     ) {
         // Compact header with back button, month navigation and filters
         Row(
@@ -141,6 +153,8 @@ fun GardenScreen(
             }
         }
     }
+
+    } // End Scaffold
 
     // Entry detail bottom sheet
     uiState.selectedEntry?.let { entry ->

@@ -13,4 +13,5 @@ sealed class Screen(val route: String) {
     object Insights : Screen("insights")
     object Settings : Screen("settings")
     object Achievements : Screen("achievements")
+    object ImpulseCheck : Screen("impulse_check")
 }

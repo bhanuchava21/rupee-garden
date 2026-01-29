@@ -5,8 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bhanu.rupeegarden.data.datastore.RupeeGardenDataStore
 import com.bhanu.rupeegarden.data.model.DayEntry
+import com.bhanu.rupeegarden.data.model.ImpulseStats
 import com.bhanu.rupeegarden.data.model.UserProgress
 import com.bhanu.rupeegarden.data.repository.EntryRepository
+import com.bhanu.rupeegarden.data.repository.ImpulseRepository
 import com.bhanu.rupeegarden.data.repository.ProgressRepository
 import com.bhanu.rupeegarden.domain.usecase.GetMonthlySpendingUseCase
 import com.bhanu.rupeegarden.domain.usecase.HandleStaleSessionUseCase
@@ -25,7 +27,8 @@ data class HomeUiState(
     val activeSession: DayEntry? = null,
     val canStartNewSession: Boolean = false,
     val error: String? = null,
-    val navigateToSession: Boolean = false
+    val navigateToSession: Boolean = false,
+    val impulseStats: ImpulseStats = ImpulseStats()
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,6 +36,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val dataStore = RupeeGardenDataStore(application)
     private val entryRepository = EntryRepository(dataStore)
     private val progressRepository = ProgressRepository(dataStore)
+    private val impulseRepository = ImpulseRepository(dataStore)
     private val startSessionUseCase = StartSessionUseCase(entryRepository)
     private val handleStaleSessionUseCase = HandleStaleSessionUseCase(entryRepository, progressRepository)
     private val getMonthlySpendingUseCase = GetMonthlySpendingUseCase(entryRepository)
@@ -59,6 +63,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val yearMonth = YearMonth.now()
                 val monthlySpending = getMonthlySpendingUseCase(yearMonth, progress.monthlyBudget)
 
+                // Load impulse stats
+                val impulseStats = impulseRepository.getImpulseStats()
+
                 // Check for active session
                 val activeSession = when (staleResult) {
                     is StaleSessionResult.ActiveSession -> staleResult.entry
@@ -74,7 +81,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         monthlySpending = monthlySpending,
                         hasActiveSession = activeSession != null,
                         activeSession = activeSession,
-                        canStartNewSession = !hasEntryForToday
+                        canStartNewSession = !hasEntryForToday,
+                        impulseStats = impulseStats
                     )
                 }
             } catch (e: Exception) {
